@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" type="text/css" href="styles.css" />
+	</head>
+	<body>
+		<script src="matter.min.js"></script>		
+		<script>
+			
+			// Create the Engine & Render
+
+			let engine = Matter.Engine.create();
+
+			let render = Matter.Render.create({
+
+					element: document.body,
+					engine: engine,
+					options: {
+						width: 1200,
+						height: 800,
+						wireframes: false
+					}
+
+			});
+
+			// Mouse Control
+
+			let mouse = Matter.Mouse.create(render.canvas);
+
+			let mouseConstraint = Matter.MouseConstraint.create(engine, {
+				mouse: mouse, 
+				constraint: {
+					render: { visible: false }
+				}
+			});
+
+			render.mouse = mouse;
+
+			// Create the basket
+
+			let basket_left = Matter.Bodies.polygon(830,300,5,5, { 
+				isStatic: true,
+				render: {
+     			    fillStyle: 'white'
+    			}			
+			});
+
+			let basket_right = Matter.Bodies.polygon(900,300,5,5, { 
+				isStatic: true,
+				render: {
+     			    fillStyle: 'white'
+    			}			
+			});
+
+			let basket_table = Matter.Bodies.rectangle(910,230,10,100, {
+				isStatic: true, 
+				render: {
+					fillStyle: 'red',
+				}
+			})
+
+			// Create the ball launcher: Ball & Sling
+
+			let ball = Matter.Bodies.circle(300,600,20, {
+				render: {
+					sprite: {
+    	                texture: 'img/ball.png'
+        	        }
+				}
+			});
+
+			let sling = Matter.Constraint.create({
+				pointA: { x: 300, y: 600},
+				bodyB: ball,
+				stiffness: 0.05
+			});
+		
+			// Fire Balls
+
+			let firing = false;
+
+			Matter.Events.on(mouseConstraint, 'enddrag', function(e){
+				if (e.body == ball) firing = true; 
+			});
+
+			Matter.Events.on(engine,'afterUpdate',function() {
+
+				let yRandom = Matter.Common.random(200,600);
+				let xRandom = Matter.Common.random(100,300);
+				
+				if (firing) {
+
+					ball = Matter.Bodies.circle(xRandom,yRandom,20, {
+						render: {
+							sprite: {
+    	                		texture: 'img/ball.png'
+        	        		}
+        	        	}
+					});
+
+					Matter.World.add(engine.world,ball);
+					sling.bodyB = ball;
+					sling.pointA = { x: xRandom, y: yRandom };
+
+					firing = false;
+				}
+			});
+
+			// Add all elements to the world
+
+			Matter.World.add(engine.world, [ball, sling, basket_left, basket_right, basket_table, mouseConstraint]);
+
+			// Call to Runner & Render 
+
+			Matter.Runner.run(engine);
+			Matter.Render.run(render);
+
+		</script>
+	</body>
+</html>
